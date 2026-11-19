@@ -1,0 +1,51 @@
+/* 3_preemptive.c
+ *
+ * Preemptive priority scheduling.
+ * The only change from example 2: instead of running a process for its
+ * whole burst, we run it for ONE time unit and then choose again.
+ * If a higher-priority process has arrived in the meantime, it wins.
+ *
+ * Build: gcc -Wall -o preempt 3_preemptive.c && ./preempt
+ */
+#include <stdio.h>
+
+struct proc {
+    const char *name;
+    int arrival;
+    int remaining;  /* CPU time still needed */
+    int priority;   /* lower = more important */
+};
+
+int main(void)
+{
+    struct proc p[] = {
+        {"P1", 0, 5, 3},
+        {"P2", 1, 3, 1},
+        {"P3", 2, 1, 2},
+    };
+    int n = 3, finished = 0, time = 0, last = -1;
+
+    while (finished < n) {
+        int best = -1;
+        for (int i = 0; i < n; i++) {
+            if (p[i].remaining == 0 || p[i].arrival > time)
+                continue;
+            if (best == -1 || p[i].priority < p[best].priority)
+                best = i;
+        }
+
+        if (best != -1) {
+            if (best != last)   /* print only when the CPU switches */
+                printf("t=%2d: switch to %s (priority %d)\n",
+                       time, p[best].name, p[best].priority);
+            p[best].remaining--;            /* run for one tick */
+            if (p[best].remaining == 0) {
+                printf("t=%2d: %s finished\n", time + 1, p[best].name);
+                finished++;
+            }
+        }
+        last = best;
+        time++;
+    }
+    return 0;
+}

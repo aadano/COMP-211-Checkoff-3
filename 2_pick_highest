@@ -1,0 +1,52 @@
+/* 2_pick_highest.c
+ *
+ * Non-preemptive priority scheduling with arrival times.
+ * Sorting no longer works, because a process can't run before it
+ * arrives. Instead, whenever the CPU is free we look at everything
+ * that has arrived and pick the highest-priority one.
+ *
+ * Build: gcc -Wall -o pick 2_pick_highest.c && ./pick
+ */
+#include <stdio.h>
+
+struct proc {
+    const char *name;
+    int arrival;
+    int burst;
+    int priority;   /* lower = more important */
+    int done;       /* 1 once it has run      */
+};
+
+int main(void)
+{
+    struct proc p[] = {
+        {"P1", 0, 5, 3, 0},
+        {"P2", 1, 3, 1, 0},
+        {"P3", 2, 1, 2, 0},
+    };
+    int n = 3, finished = 0, time = 0;
+
+    while (finished < n) {
+        /* Find the highest-priority process that has arrived. */
+        int best = -1;
+        for (int i = 0; i < n; i++) {
+            if (p[i].done || p[i].arrival > time)
+                continue;
+            if (best == -1 || p[i].priority < p[best].priority)
+                best = i;
+        }
+
+        if (best == -1) {   /* nothing has arrived yet: CPU idles */
+            time++;
+            continue;
+        }
+
+        /* Non-preemptive: it runs its whole burst. */
+        printf("t=%2d: run %s (priority %d) until t=%d\n",
+               time, p[best].name, p[best].priority, time + p[best].burst);
+        time += p[best].burst;
+        p[best].done = 1;
+        finished++;
+    }
+    return 0;
+}
